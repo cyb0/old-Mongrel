@@ -20,7 +20,6 @@ class dbApi(object):
 									db = self.dbname
 									)
 			self.cursor = self.conn.cursor()
-			return self.cursor
 		except MySQLdb.Error, e:
 			print "Error %d : %s" % (e.args[0], e.args[1])
 			
