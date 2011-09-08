@@ -9,7 +9,7 @@ class Mongrel(Server):
                 while True:
                         time.sleep(1)
 # UGLY CALL!!!
-app = Mongrel(stdout = CURRENT_DIR + 'logs/' + 'output.log', stderr = CURRENT_DIR + 'logs/' + 'error.log')
+app = Mongrel('/tmp/mongrel.pid', stdout = CURRENT_DIR + 'logs/' + 'output.log', stderr = CURRENT_DIR + 'logs/' + 'error.log')
 #print len(app.data)
 #print app.data['database']
 if len(sys.argv) == 2:
@@ -28,11 +28,5 @@ else:
 		print "usage: %s start|stop|restart" % sys.argv[0]
 		sys.exit[2]
 
-poller = Poller(app.data)
-#print "Mongrel data lenght: %d" % len(app.data)
-#print "Mongrel config desc: %s" % app.data['config']
-#print "Mongrel database desc: %s" % app.data['database']
-#print dir(app)
-#print dir(poller)
-
-
+#poller = Poller(app.data, 'tmp/mongrel-poller.pid')
+#poller.start()
