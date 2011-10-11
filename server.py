@@ -1,23 +1,26 @@
-import sys, os, time
-from server import Server
-from poller import Poller
+import sys, os, time, atexit
+from signal import SIGTERM
+from dbApi import dbApi
+from ConfigParser import ConfigParser
 
 CURRENT_DIR = os.getcwd() + '/' # current dir with slas
 
-<<<<<<< HEAD
 class Server:
 	"""This is a main initialization class
 	Here we will have all main initialization functions and objects"""
 
-	def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+	def __init__(self, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+		self.data = {}
 		self.stdin = stdin
 		self.stdout = stdout
 		self.stderr = stderr
-		self.pidfile = pidfile
 
 		# Configuration import
 		config = ConfigParser()
 		config.readfp(open(CURRENT_DIR + 'include/' + 'mong.conf', 'rb'))
+		# Append to data stack
+
+#		self.pidfile = config.get('Server', 'pidfile')
 
 		# Database initialization
 		host = config.get('Database', 'host')
@@ -26,9 +29,18 @@ class Server:
 		dbname = config.get('Database', 'dbname')
 		db = dbApi(host, user, passwd, dbname)
 
+		# Setting up the pid file
+		pidfile = config.get('Server', 'pidfile')
+		self.pidfile = pidfile
+
+		# Append to data stack
+		self.data['database'] = db
+		self.data['config'] = config
+		self.data['pidfile'] = pidfile
+
 	def daemonize(self):
 		"""
-		UNIX double-fork magic. Some info:
+		UNIX double-fork magic. Some info:		
 		Fork a second child and exit immediately to prevent zombies.  This
 		causes the second child process to be orphaned, making the init
 		process responsible for its cleanup.  And, since the first child is
@@ -76,6 +88,7 @@ class Server:
 		# write pid file
 		atexit.register(self.delpid)
 		pid = str(os.getpid())
+		self.pid = pid
 		file(self.pidfile, 'w+').write("%s\n" % pid)
 
 	def delpid(self):
@@ -85,7 +98,7 @@ class Server:
 		"""
 		Start the daemon
 		"""
-	# Check for pid file to see if the daemon already runs
+		# Check for pid file to see if the daemon already runs
 		try:
 			pf = file(self.pidfile, 'r')
 			pid = int(pf.read().strip())
@@ -100,6 +113,7 @@ class Server:
 
 		# Start the daemon
 		self.daemonize()
+		sys.stderr.write("Starting %s ... PID: %s\n" % (self.pidfile, self.pid))
 		self.run()
 
 	def stop(self):
@@ -139,38 +153,24 @@ class Server:
 		"""
 		self.stop()
 		self.start()
+	
+	def status(self):
+		"""
+		Get status information
+		"""
+		# Get the pid from pidfile
+		try:
+			pf = file(self.pidfile, 'r')
+			pid = int(pf.read().strip())
+			pf.close()
+		except IOError:
+			pid = None
+
+		if not pid:
+			message = "pidfile %s does not exist, maybe Mongrel not running?\n"
+			sys.stderr.write(message % self.pidfile)
+		else:	
+			sys.stdout.write("Status: Running! PID %s\n" % pid)
 
 	def run(self):
 		pass
-
-##### IMPLEMENTATION  - WATCH OUT - ITS UGLY!!! #####
-=======
->>>>>>> experimental
-class Mongrel(Server):
-	def run(self):
-		while True:
-			time.sleep(1)
-
-# UGLY CALL!!!
-app = Mongrel(stdout = CURRENT_DIR + 'logs/' + 'output.log', stderr = CURRENT_DIR + 'logs/' + 'error.log')
-#print len(app.data)
-if len(sys.argv) == 2:
-	if 'start' == sys.argv[1]:
-		app.start()
-		app.status()
-	elif 'stop' == sys.argv[1]:
-		app.stop()
-	elif 'restart' == sys.argv[1]:
-		app.restart()
-	elif 'status' == sys.argv[1]:
-		app.status()
-	else:
-		print "Unknown command\n"
-		print "usage: %s start|stop|restart" % sys.argv[0]
-		sys.exit(2)
-else:
-		print "usage: %s start|stop|restart" % sys.argv[0]
-		sys.exit(2)
-
-#poller = Poller(app.data, 'tmp/mongrel-poller.pid')
-#poller.start()
