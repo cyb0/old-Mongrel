@@ -9,19 +9,16 @@ class Server:
 	"""This is a main initialization class
 	Here we will have all main initialization functions and objects"""
 
-	def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
-#		self.__class__ = 'Server'
+	def __init__(self, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
 		self.data = {}
 		self.stdin = stdin
 		self.stdout = stdout
 		self.stderr = stderr
-		self.pidfile = pidfile
 
 		# Configuration import
 		config = ConfigParser()
 		config.readfp(open(CURRENT_DIR + 'include/' + 'mong.conf', 'rb'))
 		# Append to data stack
-		self.data['config'] = config
 
 #		self.pidfile = config.get('Server', 'pidfile')
 
@@ -31,12 +28,20 @@ class Server:
 		passwd = config.get('Database', 'passwd')
 		dbname = config.get('Database', 'dbname')
 		db = dbApi(host, user, passwd, dbname)
+
+		# Setting up the pid file
+		pidfile = config.get('Server', 'pidfile')
+		self.pidfile = pidfile
+
 		# Append to data stack
 		self.data['database'] = db
+		self.data['config'] = config
+		self.data['pidfile'] = pidfile
 
 	def daemonize(self):
 		"""
-		UNIX double-fork magic. Some info:		Fork a second child and exit immediately to prevent zombies.  This
+		UNIX double-fork magic. Some info:		
+		Fork a second child and exit immediately to prevent zombies.  This
 		causes the second child process to be orphaned, making the init
 		process responsible for its cleanup.  And, since the first child is
 		a session leader without a controlling terminal, it's possible for
