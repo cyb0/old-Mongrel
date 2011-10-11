@@ -20,6 +20,8 @@ if len(sys.argv) == 2:
 		app.stop()
 	elif 'restart' == sys.argv[1]:
 		app.restart()
+	elif 'status' == sys.argv[1]:
+		app.status()
 	else:
 		print "Unknown command\n"
 		print "usage: %s start|stop|restart" % sys.argv[0]
