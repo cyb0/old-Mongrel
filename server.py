@@ -2,10 +2,11 @@ import sys, os, time, atexit
 from signal import SIGTERM
 from dbApi import dbApi
 from ConfigParser import ConfigParser
+from include.telnet import TelnetServer
 
 CURRENT_DIR = os.getcwd() + '/' # current dir with slas
 
-class Server:
+class Server():
 	"""This is a main initialization class
 	Here we will have all main initialization functions and objects"""
 
@@ -33,10 +34,15 @@ class Server:
 		pidfile = config.get('Server', 'pidfile')
 		self.pidfile = pidfile
 
+		# Setting up the port for the telnet server
+		port = config.get('Server', 'port')
+		self.port = int(port)
+
 		# Append to data stack
 		self.data['database'] = db
 		self.data['config'] = config
 		self.data['pidfile'] = pidfile
+		self.data['port'] = port
 
 	def daemonize(self):
 		"""
@@ -110,7 +116,7 @@ class Server:
 			message = "pidfile %s already exist, maybe Mongrel already running?\n"
 			sys.stderr.write(message % self.pidfile)
 			sys.exit(1)
-
+		
 		# Start the daemon
 		self.daemonize()
 		sys.stderr.write("Starting %s ... PID: %s\n" % (self.pidfile, self.pid))
