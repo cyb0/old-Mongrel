@@ -21,8 +21,6 @@ class Server():
 		config.readfp(open(CURRENT_DIR + 'include/' + 'mong.conf', 'rb'))
 		# Append to data stack
 
-#		self.pidfile = config.get('Server', 'pidfile')
-
 		# Database initialization
 		host = config.get('Database', 'host')
 		user = config.get('Database', 'user')
