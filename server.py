@@ -42,6 +42,10 @@ class Server():
 		self.data['pidfile'] = pidfile
 		self.data['port'] = port
 
+		# Settings for telnet server
+		self.client_list = []
+		self.port = 7777
+
 	def daemonize(self):
 		"""
 		UNIX double-fork magic. Some info:		
@@ -94,6 +98,7 @@ class Server():
 		pid = str(os.getpid())
 		self.pid = pid
 		file(self.pidfile, 'w+').write("%s\n" % pid)
+		sys.stderr.write("Starting %s ... PID: %s\n" % (self.pidfile, self.pid))
 
 	def delpid(self):
 		os.remove(self.pidfile)
@@ -115,9 +120,12 @@ class Server():
 			sys.stderr.write(message % self.pidfile)
 			sys.exit(1)
 		
+		# sys.stderr.write("Starting %s ... PID: %s\n" % (self.pidfile, self.pid))
 		# Start the daemon
 		self.daemonize()
-		sys.stderr.write("Starting %s ... PID: %s\n" % (self.pidfile, self.pid))
+		# Run the telnet server
+		self.tel_run()
+		# Run the server
 		self.run()
 
 	def stop(self):
@@ -178,3 +186,75 @@ class Server():
 
 	def run(self):
 		pass
+
+	def tel_connect(self, client):
+
+		print "++ Opened connection from %s \n" % client.addrport()
+		self.client_list.append(client)
+		client.active = True
+		client.send("Welcome to Mongrel v0.2. Your IP is %s \n" % client.addrport())
+		client.send(">>> ")
+
+	def tel_disconnect(self, client):
+		print "++ Closed connection from %s \n" % client.addrport()
+		client.send("Bye, %s!" % client.addrport())
+		self.client_list.remove(client)
+		client.active = False
+
+	def process_client(self):
+		for client in self.client_list:
+			if client.active and client.cmd_ready:
+				self.chat(client)
+
+	def chat(self, client):
+		msg = client.get_command()
+		for guest in self.client_list:
+			if guest != client:
+				guest.send("%s: %s \n" % (client.addrport(), msg))
+				guest.send(">>> ")
+			else:
+				guest.send("%s: %s \n" % (client.addrport(), msg))
+				client.send(">>> ")
+		cmd = msg.lower()
+		if cmd == 'bye':
+			client.active = False
+	
+	def tel_run(self):
+		self.server_conn = TelnetServer(
+			port = self.port,
+			address = '',
+			on_connect = self.tel_connect,
+			on_disconnect = self.tel_disconnect
+		)
+
+		sys.stdout.write("Running telnet service on port %d \n" % self.port)
+		while (1):
+			self.server_conn.poll()
+			self.process_client()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
